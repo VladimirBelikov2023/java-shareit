@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto patchUser(int id, UserDto userDto) {
         UserDto user = getUser(id);
-        if (user==null){
+        if (user == null) {
             throw new NoObjectException("User не найден");
         }
         User originUser = UserMapper.toUser(user);

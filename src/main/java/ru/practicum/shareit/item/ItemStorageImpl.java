@@ -26,7 +26,7 @@ public class ItemStorageImpl implements ItemStorage {
     @Override
     public ItemDto patchItem(Item item, int ownerId) {
         Item itemBase = items.get(item.getId());
-        if (itemBase==null){
+        if (itemBase == null) {
             throw new NoObjectException("Item не найден в базе");
         }
         if (items.get(item.getId()).getOwner().getId() != ownerId) {
