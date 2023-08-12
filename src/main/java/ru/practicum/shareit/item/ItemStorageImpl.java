@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Component
 public class ItemStorageImpl implements ItemStorage {
-    private Map<Integer, Item> items = new HashMap<>();
+    private final Map<Integer, Item> items = new HashMap<>();
     private int id = 1;
 
     @Override
@@ -20,12 +20,7 @@ public class ItemStorageImpl implements ItemStorage {
         item.setId(id);
         id++;
         items.put(item.getId(), item);
-        return new ItemDto(
-                item.getId(),
-                item.getName(),
-                item.getDescription(),
-                item.getAvailable()
-        );
+        return ItemMapper.toItemDto(item);
     }
 
     @Override
@@ -35,23 +30,13 @@ public class ItemStorageImpl implements ItemStorage {
         }
         Item originItem = update(item);
         items.put(originItem.getId(), originItem);
-        return new ItemDto(
-                originItem.getId(),
-                originItem.getName(),
-                originItem.getDescription(),
-                originItem.getAvailable()
-        );
+        return ItemMapper.toItemDto(originItem);
     }
 
     @Override
     public ItemDto getItem(int id) {
         Item item = items.get(id);
-        return new ItemDto(
-                item.getId(),
-                item.getName(),
-                item.getDescription(),
-                item.getAvailable()
-        );
+        return ItemMapper.toItemDto(item);
     }
 
     @Override
@@ -59,12 +44,7 @@ public class ItemStorageImpl implements ItemStorage {
         List<ItemDto> itemList = new ArrayList<>();
         for (Item o : items.values()) {
             if (o.getOwner().getId() == id) {
-                ItemDto item = new ItemDto(
-                        o.getId(),
-                        o.getName(),
-                        o.getDescription(),
-                        o.getAvailable()
-                );
+                ItemDto item = ItemMapper.toItemDto(o);
                 itemList.add(item);
             }
         }
@@ -79,12 +59,7 @@ public class ItemStorageImpl implements ItemStorage {
         }
         for (Item o : items.values()) {
             if ((o.getName().toLowerCase().contains(text.toLowerCase()) || o.getDescription().toLowerCase().contains(text.toLowerCase())) && o.getAvailable()) {
-                ItemDto item = new ItemDto(
-                        o.getId(),
-                        o.getName(),
-                        o.getDescription(),
-                        o.getAvailable()
-                );
+                ItemDto item = ItemMapper.toItemDto(o);
                 itemList.add(item);
             }
         }

@@ -13,18 +13,20 @@ import java.util.List;
 @AllArgsConstructor
 @Service
 public class ItemServiceImpl implements ItemService {
-    UserStorage userStorage;
-    ItemStorage itemStorage;
+    private final UserStorage userStorage;
+    private final ItemStorage itemStorage;
 
     @Override
-    public ItemDto createItem(Item item, int id) {
+    public ItemDto createItem(ItemDto itemDto, int id) {
+        Item item = ItemMapper.toItem(itemDto);
         check(item, id);
         item.setOwner(userStorage.getUser(id));
         return itemStorage.createItem(item);
     }
 
     @Override
-    public ItemDto patchItem(Item item, int id, int ownerId) {
+    public ItemDto patchItem(ItemDto itemDto, int id, int ownerId) {
+        Item item = ItemMapper.toItem(itemDto);
         item.setId(id);
         return itemStorage.patchItem(item, ownerId);
     }
