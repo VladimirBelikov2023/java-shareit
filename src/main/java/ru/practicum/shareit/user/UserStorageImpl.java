@@ -46,12 +46,7 @@ public class UserStorageImpl implements UserStorage {
     @Override
     public User patchUser(User user) {
         User orUser = getUser(user.getId());
-        if (user.getName() == null) {
-            user.setName(orUser.getName());
-        }
-        if (user.getEmail() == null) {
-            user.setEmail(orUser.getEmail());
-        } else if (!orUser.getEmail().equals(user.getEmail())) {
+        if (!orUser.getEmail().equals(user.getEmail())) {
             check(user);
         }
         users.put(user.getId(), user);

@@ -30,22 +30,30 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUser(int id) {
-        return isExists(id);
+        return UserMapper.toUserDto(userStorage.getUser(id));
     }
 
     @Override
     public void deleteUser(int id) {
-        isExists(id);
         userStorage.deleteUser(id);
     }
 
     @Override
     public UserDto patchUser(int id, UserDto userDto) {
-        User user = UserMapper.toUser(userDto);
-        user.setId(id);
-        check(user);
-        isExists(id);
-        return UserMapper.toUserDto(userStorage.patchUser(user));
+        UserDto user = getUser(id);
+        if (user==null){
+            throw new NoObjectException("User не найден");
+        }
+        User originUser = UserMapper.toUser(user);
+        if (userDto.getName() != null) {
+            originUser.setName(userDto.getName());
+        }
+        if (userDto.getEmail() != null) {
+            originUser.setEmail(userDto.getEmail());
+        }
+        originUser.setId(id);
+        check(originUser);
+        return UserMapper.toUserDto(userStorage.patchUser(originUser));
     }
 
     private UserDto check(User user) {
@@ -56,13 +64,4 @@ public class UserServiceImpl implements UserService {
         }
         return UserMapper.toUserDto(user);
     }
-
-    private UserDto isExists(int id) {
-        User user = userStorage.getUser(id);
-        if (user == null) {
-            throw new NoObjectException("User не обнаружен");
-        }
-        return UserMapper.toUserDto(user);
-    }
-
 }

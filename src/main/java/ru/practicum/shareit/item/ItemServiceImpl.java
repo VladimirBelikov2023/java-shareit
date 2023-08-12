@@ -42,11 +42,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> getItems(int id) {
-        try {
-            return itemStorage.getItems(id);
-        } catch (Exception e) {
-            throw new NoObjectException("User не найден");
-        }
+        return itemStorage.getItems(id);
     }
 
     @Override

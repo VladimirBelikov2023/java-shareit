@@ -1,7 +1,10 @@
 package ru.practicum.shareit.item;
 
 import lombok.AllArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.Create;
+import ru.practicum.shareit.Update;
 import ru.practicum.shareit.item.dto.ItemDto;
 
 import java.util.List;
@@ -14,12 +17,12 @@ public class ItemController {
     private final ItemService itemService;
 
     @PostMapping
-    public ItemDto createItem(@RequestHeader("X-Sharer-User-Id") int id, @RequestBody ItemDto item) {
+    public ItemDto createItem(@RequestHeader("X-Sharer-User-Id") int id, @RequestBody @Validated(Create.class) ItemDto item) {
         return itemService.createItem(item, id);
     }
 
     @PatchMapping("{id}")
-    public ItemDto patchItem(@RequestHeader("X-Sharer-User-Id") int ownerId, @RequestBody ItemDto item, @PathVariable int id) {
+    public ItemDto patchItem(@RequestHeader("X-Sharer-User-Id") int ownerId, @RequestBody @Validated(Update.class) ItemDto item, @PathVariable int id) {
         return itemService.patchItem(item, id, ownerId);
     }
 

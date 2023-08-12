@@ -25,10 +25,14 @@ public class ItemStorageImpl implements ItemStorage {
 
     @Override
     public ItemDto patchItem(Item item, int ownerId) {
+        Item itemBase = items.get(item.getId());
+        if (itemBase==null){
+            throw new NoObjectException("Item не найден в базе");
+        }
         if (items.get(item.getId()).getOwner().getId() != ownerId) {
             throw new NoObjectException("Это не ваша вещь");
         }
-        Item originItem = update(item);
+        Item originItem = update(item, itemBase);
         items.put(originItem.getId(), originItem);
         return ItemMapper.toItemDto(originItem);
     }
@@ -66,8 +70,7 @@ public class ItemStorageImpl implements ItemStorage {
         return itemList;
     }
 
-    private Item update(Item item) {
-        Item originItem = items.get(item.getId());
+    private Item update(Item item, Item originItem) {
         if (item.getName() != null) {
             originItem.setName(item.getName());
         }
