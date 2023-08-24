@@ -1,6 +1,7 @@
 package ru.practicum.shareit.user;
 
 import lombok.AllArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NoObjectException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -11,7 +12,7 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
-    private final UserStorage userStorage;
+    private final UserRepo repository;
 
     @Override
     public UserDto createUser(UserDto userDto) {
@@ -20,22 +21,30 @@ public class UserServiceImpl implements UserService {
             throw new ValidationException("Почта пустая");
         }
         check(user);
-        return UserMapper.toUserDto(userStorage.createUser(user));
+        try {
+            return UserMapper.toUserDto(repository.save(user));
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException("Дубликат электронного адреса пользователя");
+        }
     }
 
     @Override
     public List<UserDto> getAllUsers() {
-        return userStorage.getAllUsers();
+        return UserMapper.toLsUserDto(repository.findAll());
     }
 
     @Override
     public UserDto getUser(int id) {
-        return UserMapper.toUserDto(userStorage.getUser(id));
+        User user = repository.findUserById(id);
+        if (user == null) {
+            throw new NoObjectException("User не найден");
+        }
+        return UserMapper.toUserDto(user);
     }
 
     @Override
     public void deleteUser(int id) {
-        userStorage.deleteUser(id);
+        repository.deleteById(id);
     }
 
     @Override
@@ -53,7 +62,7 @@ public class UserServiceImpl implements UserService {
         }
         originUser.setId(id);
         check(originUser);
-        return UserMapper.toUserDto(userStorage.patchUser(originUser));
+        return UserMapper.toUserDto(repository.save(originUser));
     }
 
     private UserDto check(User user) {

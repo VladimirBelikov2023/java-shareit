@@ -24,7 +24,7 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public ItemDto patchItem(Item item, int ownerId) {
+    public ItemDto patchItem(Item item, long ownerId) {
         Item itemBase = items.get(item.getId());
         if (itemBase == null) {
             throw new NoObjectException("Item не найден в базе");
@@ -38,13 +38,13 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public ItemDto getItem(int id) {
+    public ItemDto getItem(long id) {
         Item item = items.get(id);
         return ItemMapper.toItemDto(item);
     }
 
     @Override
-    public List<ItemDto> getItems(int id) {
+    public List<ItemDto> getItems(long id) {
         List<ItemDto> itemList = new ArrayList<>();
         for (Item o : items.values()) {
             if (o.getOwner().getId() == id) {

@@ -1,28 +1,30 @@
-package ru.practicum.shareit.user;
+package ru.practicum.shareit.item.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "comments")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    @Column
     @NotNull
-    @NotBlank
+    private String text;
+
     @Column
-    private String name;
-    @Email
+    private String authorName;
     @Column
-    private String email;
+    private LocalDateTime created;
+    @Column
+    private int item;
 }

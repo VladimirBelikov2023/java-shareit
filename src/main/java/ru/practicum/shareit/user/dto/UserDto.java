@@ -12,7 +12,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @AllArgsConstructor
 public class UserDto {
-    private Integer id;
+    private int id;
     @NotNull(groups = {Create.class})
     @NotBlank(groups = {Create.class})
     private String name;
