@@ -3,9 +3,7 @@ package ru.practicum.shareit.item.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import ru.practicum.shareit.Create;
-import ru.practicum.shareit.item.model.Comment;
-import ru.practicum.shareit.item.model.LastBooking;
-import ru.practicum.shareit.item.model.NextBooking;
+import ru.practicum.shareit.item.model.CloseBooking;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -23,9 +21,9 @@ public class ItemDto {
     private String description;
     @NotNull(groups = {Create.class})
     private Boolean available;
-    private LastBooking lastBooking;
-    private NextBooking nextBooking;
-    private List<Comment> comments;
+    private CloseBooking lastBooking;
+    private CloseBooking nextBooking;
+    private List<CommentDto> comments;
 }
 
 

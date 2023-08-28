@@ -8,6 +8,7 @@ import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -35,11 +36,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUser(int id) {
-        User user = repository.findUserById(id);
-        if (user == null) {
+        Optional<User> user = repository.findById(id);
+        if (user.isEmpty()) {
             throw new NoObjectException("User не найден");
         }
-        return UserMapper.toUserDto(user);
+        return UserMapper.toUserDto(user.get());
     }
 
     @Override

@@ -1,9 +1,8 @@
 package ru.practicum.shareit.item.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.User;
 
@@ -14,27 +13,28 @@ import java.util.List;
 
 @Entity
 @Table(name = "items")
-@Data
+@Getter @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     @NotNull
     @NotBlank
-    @Column
+    @Column(name = "name",nullable = false, length = 40)
     private String name;
     @NotNull
     @NotBlank
-    @Column
+    @Column(name = "description", nullable = false, length = 4000)
     private String description;
     @NotNull
-    @Column
+    @Column(name = "available", nullable = false)
     private Boolean available;
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User owner;
 
@@ -43,12 +43,12 @@ public class Item {
     private ItemRequest request;
 
     @Transient
-    private LastBooking lastBooking;
+    private CloseBooking lastBooking;
     @Transient
-    private NextBooking nextBooking;
+    private CloseBooking nextBooking;
 
     @Transient
-    private List<Comment> comments;
+    private List<CommentDto> comments;
 
 
 }

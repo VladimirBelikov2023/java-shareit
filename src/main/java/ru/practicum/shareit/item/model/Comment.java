@@ -1,8 +1,7 @@
 package ru.practicum.shareit.item.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import ru.practicum.shareit.user.User;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -10,21 +9,28 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "comments")
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    @Column
+    @Column(name = "text",nullable = false, length = 4000)
     @NotNull
     private String text;
 
-    @Column
-    private String authorName;
-    @Column
-    private LocalDateTime created;
-    @Column
-    private int item;
+    @ManyToOne
+    @NotNull
+    @JoinColumn(name = "author_id", nullable = false)
+    private User user;
+    @NotNull
+    @Column(name = "created", nullable = false)
+    private final LocalDateTime created = LocalDateTime.now();
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "item_id", nullable = false)
+    private Item item;
 }

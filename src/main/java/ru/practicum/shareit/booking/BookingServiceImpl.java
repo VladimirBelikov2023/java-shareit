@@ -1,9 +1,10 @@
 package ru.practicum.shareit.booking;
 
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.exception.ErrorStatus;
+import ru.practicum.shareit.exception.ErrorStatusException;
 import ru.practicum.shareit.exception.NoObjectException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.ItemRepository;
@@ -14,6 +15,7 @@ import ru.practicum.shareit.user.UserRepo;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @AllArgsConstructor
 @Service
@@ -25,16 +27,21 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto createBooking(BookingDto bookingDto, int ownerId) {
-        Item item = itemRepository.findItemById(bookingDto.getItemId());
-        User owner = userRepo.findUserById(ownerId);
-        if (item == null || owner == null) {
+        Item item;
+        User user;
+        Optional<Item> itemOptional = itemRepository.findById(bookingDto.getItemId());
+        Optional<User> ownerOptional = userRepo.findById(ownerId);
+        if (itemOptional.isEmpty() || ownerOptional.isEmpty()) {
             throw new NoObjectException("Неверные входные данные");
+        } else {
+            item = itemOptional.get();
+            user = ownerOptional.get();
         }
         if (item.getOwner().getId() == ownerId) {
             throw new NoObjectException("Вы владелец вещи");
         }
-        bookingDto.setStatus("WAITING");
-        bookingDto.setBooker(owner);
+        bookingDto.setStatus(Status.WAITING);
+        bookingDto.setBooker(user);
         bookingDto.setItem(item);
         check(bookingDto);
         Booking booking = BookingMapper.toBooking(bookingDto);
@@ -43,22 +50,27 @@ public class BookingServiceImpl implements BookingService {
 
 
     public BookingDto approveBooking(int ownerId, int id, boolean isApproved) {
-        User owner = userRepo.findUserById(ownerId);
-        Booking booking = bookingRepository.findBookingById(id);
+        User owner;
+        Booking booking;
+        Optional<User> ownerOptional = userRepo.findById(ownerId);
+        Optional<Booking> bookingOptional = bookingRepository.findById(id);
 
-        if (owner == null || booking == null) {
+        if (ownerOptional.isEmpty() || bookingOptional.isEmpty()) {
             throw new NoObjectException("Неверные входные данные");
+        } else {
+            owner = ownerOptional.get();
+            booking = bookingOptional.get();
         }
         if (booking.getItem().getOwner().getId() != owner.getId()) {
             throw new NoObjectException("Вы не владелец");
         }
-        if (booking.getStatus().equals("APPROVED") || booking.getStatus().equals("REJECTED")) {
+        if (booking.getStatus().equals(Status.APPROVED) || booking.getStatus().equals(Status.REJECTED)) {
             throw new ValidationException("Запрос уже рассмотрен");
         }
         if (isApproved) {
-            booking.setStatus("APPROVED");
+            booking.setStatus(Status.APPROVED);
         } else {
-            booking.setStatus("REJECTED");
+            booking.setStatus(Status.REJECTED);
         }
         bookingRepository.save(booking);
         return BookingMapper.toBookingDto(booking);
@@ -66,11 +78,16 @@ public class BookingServiceImpl implements BookingService {
 
 
     public BookingDto getBooking(int ownerId, int id) {
-        User owner = userRepo.findUserById(ownerId);
-        Booking booking = bookingRepository.findBookingById(id);
+        User owner;
+        Booking booking;
+        Optional<User> ownerOptional = userRepo.findById(ownerId);
+        Optional<Booking> bookingOptional = bookingRepository.findById(id);
 
-        if (owner == null || booking == null) {
+        if (ownerOptional.isEmpty() || bookingOptional.isEmpty()) {
             throw new NoObjectException("Неверные входные данные");
+        } else {
+            owner = ownerOptional.get();
+            booking = bookingOptional.get();
         }
         if (booking.getBooker().getId() != owner.getId() && owner.getId() != booking.getItem().getOwner().getId()) {
             throw new NoObjectException("Вы не можете посмотреть запрос");
@@ -81,70 +98,76 @@ public class BookingServiceImpl implements BookingService {
 
 
     public List<BookingDto> getBookingLs(int ownerId, String state) {
-        User owner = userRepo.findUserById(ownerId);
-        if (owner == null) {
+        Optional<User> owner = userRepo.findById(ownerId);
+        if (owner.isEmpty()) {
             throw new NoObjectException("User не найден");
         }
         return getBooks(state, ownerId, false);
     }
 
     public List<BookingDto> getBookingLsOwner(int ownerId, String state) {
-        User owner = userRepo.findUserById(ownerId);
-        if (owner == null) {
+        Optional<User> owner = userRepo.findById(ownerId);
+        if (owner.isEmpty()) {
             throw new NoObjectException("User не найден");
         }
         return getBooks(state, ownerId, true);
     }
 
 
-    private List<BookingDto> getBooks(String state, int ownerId, boolean isTrue) {
+    private List<BookingDto> getBooks(String stateStr, int ownerId, boolean isTrue) {
+        State state;
+        try {
+            state = State.valueOf(stateStr);
+        } catch (Exception e) {
+            throw new ErrorStatusException();
+        }
         List<BookingDto> answer = new ArrayList<>();
         List<Booking> bookings;
         switch (state) {
-            case "ALL":
+            case ALL:
                 if (isTrue) {
                     bookings = bookingRepository.findAllOrderedBookingOwner(ownerId);
                 } else {
-                    bookings = bookingRepository.findAllOrderedBooking();
+                    bookings = bookingRepository.findByBookerId(ownerId, Sort.by("ending").descending());
                 }
                 break;
-            case "PAST":
+            case PAST:
                 if (isTrue) {
                     bookings = bookingRepository.findAllLastBookingOwner(ownerId);
                 } else {
-                    bookings = bookingRepository.findAllLastBooking();
+                    bookings = bookingRepository.findByEndingIsBeforeAndBookerIdOrderByEndingDesc(LocalDateTime.now(), ownerId);
                 }
                 break;
-            case "CURRENT":
+            case CURRENT:
                 if (isTrue) {
                     bookings = bookingRepository.findAllCurrentBookingOwner(ownerId);
                 } else {
-                    bookings = bookingRepository.findAllCurrentBooking();
+                    bookings = bookingRepository.findByStartingIsBeforeAndEndingIsAfterAndBookerId(LocalDateTime.now(), LocalDateTime.now(), ownerId, Sort.by("ending").descending());
                 }
                 break;
-            case "FUTURE":
+            case FUTURE:
                 if (isTrue) {
                     bookings = bookingRepository.findAllFutureBookingOwner(ownerId);
                 } else {
-                    bookings = bookingRepository.findAllFutureBooking();
+                    bookings = bookingRepository.findByStartingIsAfterAndBookerIdOrderByEndingDesc(LocalDateTime.now(), ownerId);
                 }
                 break;
-            case "WAITING":
+            case WAITING:
                 if (isTrue) {
                     bookings = bookingRepository.findAllWaitingBookingOwner(ownerId);
                 } else {
-                    bookings = bookingRepository.findAllWaitingBooking();
+                    bookings = bookingRepository.findByStatusAndBookerId(Status.WAITING, ownerId, Sort.by("ending").descending());
                 }
                 break;
-            case "REJECTED":
+            case REJECTED:
                 if (isTrue) {
                     bookings = bookingRepository.findAllRejectedBookingOwner(ownerId);
                 } else {
-                    bookings = bookingRepository.findAllRejectedBooking(ownerId);
+                    bookings = bookingRepository.findByBookerIdAndStatus(ownerId, Status.REJECTED, Sort.by("ending").descending());
                 }
                 break;
             default:
-                throw new ErrorStatus();
+                throw new ErrorStatusException();
         }
         for (Booking o : bookings) {
             answer.add(BookingMapper.toBookingDto(o));

@@ -34,17 +34,15 @@ public class ItemMapper {
     }
 
     public static Item toItem(ItemDto itemDto, User user) {
-        return new Item(
-                itemDto.getId(),
-                itemDto.getName(),
-                itemDto.getDescription(),
-                itemDto.getAvailable(),
-                user,
-                null,
-                itemDto.getLastBooking(),
-                itemDto.getNextBooking(),
-                itemDto.getComments()
-        );
+        return Item.builder()
+                .id(itemDto.getId())
+                .name(itemDto.getName())
+                .description(itemDto.getDescription())
+                .available(itemDto.getAvailable())
+                .owner(user)
+                .lastBooking(itemDto.getLastBooking())
+                .nextBooking(itemDto.getNextBooking())
+                .comments(itemDto.getComments()).build();
     }
 
 }

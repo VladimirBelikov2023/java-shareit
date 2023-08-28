@@ -1,18 +1,21 @@
 package ru.practicum.shareit.booking;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.*;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
 
 import javax.persistence.*;
+import javax.validation.constraints.Future;
+import javax.validation.constraints.FutureOrPresent;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
-@Data
+@Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Booking {
@@ -20,19 +23,24 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     @NotNull
-    @Column
+    @FutureOrPresent
+    @Column(name = "starting", nullable = false)
     private LocalDateTime starting;
     @NotNull
-    @Column
+    @Future
+    @Column(name = "ending", nullable = false)
     private LocalDateTime ending;
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "item_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Item item;
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "booker")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "booker_id", nullable = false)
     private User booker;
     @NotNull
-    private String status;
+    @Column(name = "status", nullable = false, length = 40)
+    @Enumerated(EnumType.STRING)
+    private Status status;
 }

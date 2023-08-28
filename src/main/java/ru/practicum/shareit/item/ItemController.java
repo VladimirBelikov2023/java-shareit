@@ -5,8 +5,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.Create;
 import ru.practicum.shareit.Update;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.model.Comment;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -25,7 +25,7 @@ public class ItemController {
 
 
     @PostMapping("/{itemId}/comment")
-    public Comment createComment(@RequestHeader("X-Sharer-User-Id") int id, @RequestBody @Valid Comment comment, @PathVariable int itemId) {
+    public CommentDto createComment(@RequestHeader("X-Sharer-User-Id") int id, @RequestBody @Valid CommentDto comment, @PathVariable int itemId) {
         return itemService.createComment(id, itemId, comment);
     }
 

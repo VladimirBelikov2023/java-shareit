@@ -1,8 +1,6 @@
 package ru.practicum.shareit.user;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
@@ -11,7 +9,8 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
@@ -20,9 +19,10 @@ public class User {
     private int id;
     @NotNull
     @NotBlank
-    @Column
+    @Column(name = "name", nullable = false)
     private String name;
     @Email
-    @Column
+    @NotNull
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 }
