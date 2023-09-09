@@ -24,7 +24,7 @@ public class Item {
     private int id;
     @NotNull
     @NotBlank
-    @Column(name = "name",nullable = false, length = 40)
+    @Column(name = "name", nullable = false, length = 40)
     private String name;
     @NotNull
     @NotBlank
@@ -50,7 +50,6 @@ public class Item {
 
     @Transient
     private List<CommentDto> comments;
-
 
 }
 

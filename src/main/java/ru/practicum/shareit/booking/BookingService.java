@@ -14,4 +14,6 @@ public interface BookingService {
     List<BookingDto> getBookingLs(int ownerId, String state);
 
     List<BookingDto> getBookingLsOwner(int ownerId, String state);
+
+    List<BookingDto> getBookingAll(int ownerId, int from, int size, boolean isTrue);
 }

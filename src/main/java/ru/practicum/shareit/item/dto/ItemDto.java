@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import ru.practicum.shareit.Create;
 import ru.practicum.shareit.item.model.CloseBooking;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class ItemDto {
     private int id;
     @NotBlank(groups = {Create.class})
@@ -24,6 +26,7 @@ public class ItemDto {
     private CloseBooking lastBooking;
     private CloseBooking nextBooking;
     private List<CommentDto> comments;
+    private int requestId;
 }
 
 

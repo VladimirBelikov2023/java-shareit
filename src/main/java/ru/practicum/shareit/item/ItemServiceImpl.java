@@ -13,6 +13,7 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.CloseBooking;
+import ru.practicum.shareit.request.RequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepo;
 
@@ -27,17 +28,27 @@ public class ItemServiceImpl implements ItemService {
     private final UserRepo userRepository;
     private final CommentRepo commentRepo;
     private final BookingRepository bookingRepository;
+    private final RequestRepository requestRepository;
 
     @Override
     public ItemDto createItem(ItemDto itemDto, int id) {
         Optional<User> user = userRepository.findById(id);
         if (user.isEmpty()) {
-            throw new NoObjectException("Польщователь не найден");
+            throw new NoObjectException("Пользователь не найден");
         }
-        Item item = ItemMapper.toItem(itemDto, user.get());
+        Item item = ItemMapper.toItem(itemDto);
+        if (itemDto.getRequestId() != 0) {
+            if (requestRepository.findById(itemDto.getRequestId()).isPresent()) {
+                item.setRequest(requestRepository.findById(itemDto.getRequestId()).get());
+            }
+        }
         check(item, id);
         item.setOwner(user.get());
-        return ItemMapper.toItemDto(itemRepository.save(item));
+        ItemDto itemDto1 = ItemMapper.toItemDto(itemRepository.save(item));
+        if (item.getRequest() != null) {
+            itemDto1.setRequestId(item.getRequest().getId());
+        }
+        return itemDto1;
     }
 
     @Override
@@ -85,7 +96,6 @@ public class ItemServiceImpl implements ItemService {
     public List<ItemDto> getItems(int ownerId, int itemId) {
         List<ItemDto> answer = new ArrayList<>();
         List<Item> ls = itemRepository.findAll();
-        ls.sort(Comparator.comparingInt(Item::getId));
         for (Item o : ls) {
             if (o.getOwner().getId() == ownerId) {
                 List<Booking> bookings = bookingRepository.getByItemIdAndStartingIsBeforeAndStatus(o.getId(), LocalDateTime.now(), Status.APPROVED, Sort.by("ending").descending());
@@ -144,7 +154,7 @@ public class ItemServiceImpl implements ItemService {
         List<Booking> lsBooking = bookingRepository.findByStatusAndEndingIsBefore(Status.APPROVED, LocalDateTime.now(), Sort.by("ending").descending());
         Booking booking = null;
         if (user.isEmpty() || item.isEmpty() || commentDto.getText().isBlank()) {
-            throw new ValidationException("Не верные данные");
+            throw new ValidationException("Неверные данные");
         }
         for (Booking o : lsBooking) {
             if (o.getBooker().getId() == user.get().getId() && o.getItem().getId() == idItem) {

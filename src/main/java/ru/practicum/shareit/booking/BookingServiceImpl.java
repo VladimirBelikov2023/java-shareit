@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -10,7 +11,9 @@ import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.UserRepo;
+import ru.practicum.shareit.user.UserService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ public class BookingServiceImpl implements BookingService {
     private final ItemRepository itemRepository;
     private final BookingRepository bookingRepository;
     private final UserRepo userRepo;
+    private final UserService userService;
 
     @Override
     public BookingDto createBooking(BookingDto bookingDto, int ownerId) {
@@ -126,42 +130,42 @@ public class BookingServiceImpl implements BookingService {
         switch (state) {
             case ALL:
                 if (isTrue) {
-                    bookings = bookingRepository.findAllOrderedBookingOwner(ownerId);
+                    bookings = bookingRepository.findAllOrderedBookingOwner(ownerId, Sort.by("ending").descending());
                 } else {
                     bookings = bookingRepository.findByBookerId(ownerId, Sort.by("ending").descending());
                 }
                 break;
             case PAST:
                 if (isTrue) {
-                    bookings = bookingRepository.findAllLastBookingOwner(ownerId);
+                    bookings = bookingRepository.findAllLastBookingOwner(ownerId, Sort.by("ending").descending());
                 } else {
-                    bookings = bookingRepository.findByEndingIsBeforeAndBookerIdOrderByEndingDesc(LocalDateTime.now(), ownerId);
+                    bookings = bookingRepository.findByEndingIsBeforeAndBookerId(LocalDateTime.now(), ownerId, Sort.by("ending").descending());
                 }
                 break;
             case CURRENT:
                 if (isTrue) {
-                    bookings = bookingRepository.findAllCurrentBookingOwner(ownerId);
+                    bookings = bookingRepository.findAllCurrentBookingOwner(ownerId, Sort.by("ending").descending());
                 } else {
                     bookings = bookingRepository.findByStartingIsBeforeAndEndingIsAfterAndBookerId(LocalDateTime.now(), LocalDateTime.now(), ownerId, Sort.by("ending").descending());
                 }
                 break;
             case FUTURE:
                 if (isTrue) {
-                    bookings = bookingRepository.findAllFutureBookingOwner(ownerId);
+                    bookings = bookingRepository.findAllFutureBookingOwner(ownerId, Sort.by("ending").descending());
                 } else {
                     bookings = bookingRepository.findByStartingIsAfterAndBookerIdOrderByEndingDesc(LocalDateTime.now(), ownerId);
                 }
                 break;
             case WAITING:
                 if (isTrue) {
-                    bookings = bookingRepository.findAllWaitingBookingOwner(ownerId);
+                    bookings = bookingRepository.findAllWaitingBookingOwner(ownerId, Sort.by("ending").descending());
                 } else {
                     bookings = bookingRepository.findByStatusAndBookerId(Status.WAITING, ownerId, Sort.by("ending").descending());
                 }
                 break;
             case REJECTED:
                 if (isTrue) {
-                    bookings = bookingRepository.findAllRejectedBookingOwner(ownerId);
+                    bookings = bookingRepository.findAllRejectedBookingOwner(ownerId, Sort.by("ending").descending());
                 } else {
                     bookings = bookingRepository.findByBookerIdAndStatus(ownerId, Status.REJECTED, Sort.by("ending").descending());
                 }
@@ -170,6 +174,25 @@ public class BookingServiceImpl implements BookingService {
                 throw new ErrorStatusException();
         }
         for (Booking o : bookings) {
+            answer.add(BookingMapper.toBookingDto(o));
+        }
+        return answer;
+    }
+
+    public List<BookingDto> getBookingAll(int ownerId, int from, int size, boolean isTrue) {
+        User owner = UserMapper.toUser(userService.getUser(ownerId));
+        if (size <= 0 || from < 0) {
+            throw new ValidationException("Не верные входные данные");
+        }
+        List<Booking> bookings;
+        if (!isTrue) {
+            bookings = bookingRepository.findByBookerId(ownerId, PageRequest.of(from / size, size, Sort.by("ending").descending()));
+        } else {
+            bookings = bookingRepository.findAllOrderedBookingOwnerPag(ownerId, PageRequest.of(from / size, size, Sort.by("ending").descending()));
+        }
+        List<BookingDto> answer = new ArrayList<>();
+        for (Booking o : bookings) {
+            BookingMapper.toBookingDto(o);
             answer.add(BookingMapper.toBookingDto(o));
         }
         return answer;

@@ -18,9 +18,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createUser(UserDto userDto) {
         User user = UserMapper.toUser(userDto);
-        if (user.getEmail() == null) {
-            throw new ValidationException("Почта пустая");
-        }
         check(user);
         try {
             return UserMapper.toUserDto(repository.save(user));
@@ -69,7 +66,9 @@ public class UserServiceImpl implements UserService {
     private UserDto check(User user) {
         if (user == null) {
             throw new ValidationException("Передан пустой объект пользователя");
-        } else if (user.getEmail() != null && !user.getEmail().contains("@")) {
+        } else if (user.getName() == null || user.getEmail() == null) {
+            throw new ValidationException("Не верные данные объекта");
+        } else if (!user.getEmail().contains("@")) {
             throw new ValidationException("Передан объект с некоректным email");
         }
         return UserMapper.toUserDto(user);
