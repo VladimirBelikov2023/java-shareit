@@ -1,29 +1,55 @@
 package ru.practicum.shareit.item.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.*;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.User;
 
+import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
-@Data
+@Entity
+@Table(name = "items")
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Item {
-    private Integer id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
     @NotNull
     @NotBlank
+    @Column(name = "name",nullable = false, length = 40)
     private String name;
     @NotNull
     @NotBlank
+    @Column(name = "description", nullable = false, length = 4000)
     private String description;
     @NotNull
+    @Column(name = "available", nullable = false)
     private Boolean available;
     @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User owner;
-    @NotNull
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id")
     private ItemRequest request;
+
+    @Transient
+    private CloseBooking lastBooking;
+    @Transient
+    private CloseBooking nextBooking;
+
+    @Transient
+    private List<CommentDto> comments;
 
 
 }

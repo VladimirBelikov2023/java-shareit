@@ -12,6 +12,7 @@ public class UserStorageImpl implements UserStorage {
     private final Set<String> emailUniqSet = new HashSet<>();
     private int id = 1;
 
+
     @Override
     public User createUser(User user) {
         user.setId(id);

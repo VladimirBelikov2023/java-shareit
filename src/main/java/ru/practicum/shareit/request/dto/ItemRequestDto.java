@@ -6,7 +6,8 @@ import ru.practicum.shareit.user.User;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.time.LocalDate;
+import javax.validation.constraints.PastOrPresent;
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -18,5 +19,6 @@ public class ItemRequestDto {
     @NotNull
     private User requester;
     @NotNull
-    private LocalDate created;
+    @PastOrPresent
+    private LocalDateTime created;
 }

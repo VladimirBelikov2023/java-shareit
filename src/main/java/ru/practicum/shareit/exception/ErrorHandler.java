@@ -22,4 +22,10 @@ public class ErrorHandler {
     public Map<String, String> handleValidationException(final ValidationException e) {
         return Map.of("Validation error", e.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleStateException(final ErrorStatusException e) {
+        return new ErrorResponse("Unknown state: UNSUPPORTED_STATUS", e.getMessage());
+    }
 }
