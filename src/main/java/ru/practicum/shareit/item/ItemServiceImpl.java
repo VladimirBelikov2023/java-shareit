@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item;
 
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.Booking;
@@ -13,7 +14,8 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.CloseBooking;
-import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.request.RequestRepository;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.UserRepo;
 
 import java.time.LocalDateTime;
@@ -27,17 +29,27 @@ public class ItemServiceImpl implements ItemService {
     private final UserRepo userRepository;
     private final CommentRepo commentRepo;
     private final BookingRepository bookingRepository;
+    private final RequestRepository requestRepository;
 
     @Override
     public ItemDto createItem(ItemDto itemDto, int id) {
         Optional<User> user = userRepository.findById(id);
         if (user.isEmpty()) {
-            throw new NoObjectException("Польщователь не найден");
+            throw new NoObjectException("Пользователь не найден");
         }
-        Item item = ItemMapper.toItem(itemDto, user.get());
-        check(item, id);
+        Item item = ItemMapper.toItem(itemDto);
+        if (itemDto.getRequestId() != 0) {
+            if (requestRepository.findById(itemDto.getRequestId()).isPresent()) {
+                item.setRequest(requestRepository.findById(itemDto.getRequestId()).get());
+            }
+        }
+        check(item);
         item.setOwner(user.get());
-        return ItemMapper.toItemDto(itemRepository.save(item));
+        ItemDto itemDto1 = ItemMapper.toItemDto(itemRepository.save(item));
+        if (item.getRequest() != null) {
+            itemDto1.setRequestId(item.getRequest().getId());
+        }
+        return itemDto1;
     }
 
     @Override
@@ -65,11 +77,11 @@ public class ItemServiceImpl implements ItemService {
             }
             List<Comment> comments = commentRepo.findByItem(item);
 
-            List<Booking> bookings = bookingRepository.getByItemIdAndStartingIsBeforeAndStatus(item.getId(), LocalDateTime.now(), Status.APPROVED, Sort.by("ending").descending());
+            List<Booking> bookings = bookingRepository.getByItemIdAndStartingIsBeforeAndStatus(item.getId(), LocalDateTime.now(), Status.APPROVED, PageRequest.of(0, 100, Sort.by("starting").descending()));
             if (bookings != null && bookings.size() > 0 && item.getOwner().getId() == ownerId) {
                 item.setLastBooking(new CloseBooking(bookings.get(0).getId(), bookings.get(0).getBooker().getId()));
             }
-            bookings = bookingRepository.getByItemIdAndStartingIsAfterAndStatus(item.getId(), LocalDateTime.now(), Status.APPROVED, Sort.by("starting").ascending());
+            bookings = bookingRepository.getByItemIdAndStartingIsAfterAndStatus(item.getId(), LocalDateTime.now(), Status.APPROVED, PageRequest.of(0, 100, Sort.by("starting").ascending()));
             if (bookings != null && bookings.size() > 0 && item.getOwner().getId() == ownerId) {
                 item.setNextBooking(new CloseBooking(bookings.get(0).getId(), bookings.get(0).getBooker().getId()));
             }
@@ -82,17 +94,16 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> getItems(int ownerId, int itemId) {
+    public List<ItemDto> getItems(int ownerId, int from, int size) {
         List<ItemDto> answer = new ArrayList<>();
         List<Item> ls = itemRepository.findAll();
-        ls.sort(Comparator.comparingInt(Item::getId));
         for (Item o : ls) {
             if (o.getOwner().getId() == ownerId) {
-                List<Booking> bookings = bookingRepository.getByItemIdAndStartingIsBeforeAndStatus(o.getId(), LocalDateTime.now(), Status.APPROVED, Sort.by("ending").descending());
+                List<Booking> bookings = bookingRepository.getByItemIdAndStartingIsBeforeAndStatus(o.getId(), LocalDateTime.now(), Status.APPROVED, PageRequest.of(from, size, Sort.by("starting").descending()));
                 if (bookings != null && bookings.size() > 0) {
                     o.setLastBooking(new CloseBooking(bookings.get(0).getId(), bookings.get(0).getBooker().getId()));
                 }
-                bookings = bookingRepository.getByItemIdAndStartingIsAfterAndStatus(o.getId(), LocalDateTime.now(), Status.APPROVED, Sort.by("starting").ascending());
+                bookings = bookingRepository.getByItemIdAndStartingIsAfterAndStatus(o.getId(), LocalDateTime.now(), Status.APPROVED, PageRequest.of(from, size, Sort.by("starting").ascending()));
                 if (bookings != null && bookings.size() > 0) {
                     o.setNextBooking(new CloseBooking(bookings.get(0).getId(), bookings.get(0).getBooker().getId()));
                 }
@@ -103,20 +114,18 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> search(String text) {
+    public List<ItemDto> search(String text, int from, int size) {
         List<ItemDto> itemList = new ArrayList<>();
         if (text == null || text.isEmpty() || text.isBlank()) {
             return itemList;
         }
-        List<Item> items = itemRepository.search(text);
+        List<Item> items = itemRepository.search(text, PageRequest.of(from, size));
         return items.stream().map(item -> ItemMapper.toItemDto(item)).collect(Collectors.toList());
     }
 
 
-    private void check(Item item, int id) {
-        if (userRepository.findById(id).isEmpty()) {
-            throw new NoObjectException("User не найден");
-        } else if (item.getAvailable() == null) {
+    private void check(Item item) {
+         if (item.getAvailable() == null) {
             throw new ValidationException("Available пустой");
         } else if (item.getName() == null || item.getName().isEmpty()) {
             throw new ValidationException("Name пустое");
@@ -141,10 +150,10 @@ public class ItemServiceImpl implements ItemService {
     public CommentDto createComment(int ownerId, int idItem, CommentDto commentDto) {
         Optional<User> user = userRepository.findById(ownerId);
         Optional<Item> item = itemRepository.findById(idItem);
-        List<Booking> lsBooking = bookingRepository.findByStatusAndEndingIsBefore(Status.APPROVED, LocalDateTime.now(), Sort.by("ending").descending());
+        List<Booking> lsBooking = bookingRepository.findByStatusAndEndingIsBefore(Status.APPROVED, LocalDateTime.now(), PageRequest.of(0,100,Sort.by("ending").descending()));
         Booking booking = null;
         if (user.isEmpty() || item.isEmpty() || commentDto.getText().isBlank()) {
-            throw new ValidationException("Не верные данные");
+            throw new ValidationException("Неверные данные");
         }
         for (Booking o : lsBooking) {
             if (o.getBooker().getId() == user.get().getId() && o.getItem().getId() == idItem) {
