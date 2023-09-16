@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NoObjectException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,9 +19,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createUser(UserDto userDto) {
         User user = UserMapper.toUser(userDto);
-        if (user.getEmail() == null) {
-            throw new ValidationException("Почта пустая");
-        }
         check(user);
         try {
             return UserMapper.toUserDto(repository.save(user));
@@ -37,7 +35,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getUser(int id) {
         Optional<User> user = repository.findById(id);
-        if (user.isEmpty()) {
+        if (user == null || user.isEmpty()) {
             throw new NoObjectException("User не найден");
         }
         return UserMapper.toUserDto(user.get());
@@ -51,9 +49,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto patchUser(int id, UserDto userDto) {
         UserDto user = getUser(id);
-        if (user == null) {
-            throw new NoObjectException("User не найден");
-        }
         User originUser = UserMapper.toUser(user);
         if (userDto.getName() != null) {
             originUser.setName(userDto.getName());
@@ -62,14 +57,13 @@ public class UserServiceImpl implements UserService {
             originUser.setEmail(userDto.getEmail());
         }
         originUser.setId(id);
-        check(originUser);
         return UserMapper.toUserDto(repository.save(originUser));
     }
 
     private UserDto check(User user) {
-        if (user == null) {
-            throw new ValidationException("Передан пустой объект пользователя");
-        } else if (user.getEmail() != null && !user.getEmail().contains("@")) {
+        if (user.getName() == null || user.getEmail() == null) {
+            throw new ValidationException("Не верные данные объекта");
+        } else if (!user.getEmail().contains("@")) {
             throw new ValidationException("Передан объект с некоректным email");
         }
         return UserMapper.toUserDto(user);

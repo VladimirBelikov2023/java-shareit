@@ -13,6 +13,7 @@ import java.util.List;
 @RestController
 @AllArgsConstructor
 @RequestMapping(path = "/users")
+@Validated
 public class UserController {
     private final UserService userService;
 
@@ -31,12 +32,12 @@ public class UserController {
         return userService.getUser(id);
     }
 
-    @PatchMapping("{id}")
+    @PatchMapping("/{id}")
     public UserDto patchUser(@PathVariable int id, @RequestBody @Validated(Update.class) UserDto user) {
         return userService.patchUser(id, user);
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable int id) {
         userService.deleteUser(id);
     }

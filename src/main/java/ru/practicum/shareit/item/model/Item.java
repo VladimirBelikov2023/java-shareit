@@ -3,8 +3,8 @@ package ru.practicum.shareit.item.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import ru.practicum.shareit.item.dto.CommentDto;
-import ru.practicum.shareit.request.ItemRequest;
-import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
@@ -24,7 +24,7 @@ public class Item {
     private int id;
     @NotNull
     @NotBlank
-    @Column(name = "name",nullable = false, length = 40)
+    @Column(name = "name", nullable = false, length = 40)
     private String name;
     @NotNull
     @NotBlank
@@ -50,7 +50,6 @@ public class Item {
 
     @Transient
     private List<CommentDto> comments;
-
 
 }
 
